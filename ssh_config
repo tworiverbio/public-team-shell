@@ -1,8 +1,7 @@
-Host gpu
-  HostName gpu
+Match exec "grep -qx '%h' %d/.cache/gce-vms 2>/dev/null"
   User __OSLOGIN_USER__
   IdentityFile ~/.ssh/google_compute_engine
-  ProxyCommand %d/.local/bin/iap-proxy %h %p
+  ProxyCommand ~/.local/bin/iap-proxy %h %p
   ConnectionAttempts 4
   ConnectTimeout 30
   StrictHostKeyChecking accept-new
