@@ -1,0 +1,18 @@
+#!/bin/bash
+# usage: iap-proxy ROLE PORT
+# Finds the VM labeled role=ROLE, starts it if stopped, then opens an IAP tunnel on stdin/stdout.
+ROLE=$1; PORT=${2:-22}
+
+read -r VM ZONE STATUS < <(gcloud compute instances list \
+  --filter "labels.role=$ROLE" \
+  --format 'value(name,zone.basename(),status)' | head -1)
+
+[ -z "${VM:-}" ] && { echo "iap-proxy: no VM with label role=$ROLE" >&2; exit 1; }
+
+if [ "$STATUS" != "RUNNING" ]; then
+  echo "iap-proxy: starting $ROLE box ($STATUS)..." >&2
+  gcloud compute instances start "$VM" --zone "$ZONE" --quiet >&2
+  sleep 25   # let sshd come up; ssh's ConnectionAttempts covers the rest
+fi
+
+exec gcloud compute start-iap-tunnel "$VM" "$PORT" --zone "$ZONE" --listen-on-stdin
